@@ -2,6 +2,8 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 import Users from "../models/userModel.js";
+import Groups from "../models/groupModel.js";
+
 import { ResponseError } from "../class/ResponseError.js";
 import { SearchUser } from "../class/SearchUser.js";
 import { config } from "../config.js";
@@ -82,7 +84,8 @@ const userCtrl = {
             });
 
             return res.json({
-                accessToken
+                user,
+                accessToken,
             });
         } catch (error) {
             console.log(error);
@@ -128,10 +131,24 @@ const userCtrl = {
             /* HACKED
             Need to check if both user exist.
             Need to check if the friend is already in the list or not.
+
+            I think this need to use transaction
             */
 
+            // Create group that contains both user and friend
+            const group = new Groups({
+                name: "",
+                members: [id, friendId],
+                admin: [id, friendId],
+                latestMessage: "",
+            });
+            const createdGroup = await group.save();
+
             const user = await Users.findByIdAndUpdate(id, {
-                "$push": { "friendList": friendId },
+                "$push": { 
+                    "friendList": friendId,
+                    "groupList": createdGroup._id,
+                },
             }, {
                 "new": true,
             });
@@ -141,7 +158,10 @@ const userCtrl = {
             }
 
             const friendUser = await Users.findByIdAndUpdate(friendId, {
-                "$push": { "friendList": id },
+                "$push": { 
+                    "friendList": id,
+                    "groupList": createdGroup._id,
+                },
             }, {
                 "new": true,
             });

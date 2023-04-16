@@ -7,6 +7,8 @@ import { config } from "./config.js";
 import { ResponseError } from "./class/ResponseError.js";
 
 import userRouter from "./routes/userRouter.js";
+import groupRouter from "./routes/groupRouter.js";
+import messageRouter from "./routes/messageRouter.js";
 
 const app = express();
 
@@ -32,6 +34,8 @@ app.listen(config.port, () => {
 
 // Routes
 app.use('/user', userRouter);
+app.use('/group', groupRouter);
+app.use('/message', messageRouter);
 
 // Handle 404 route, this should be at the end of every other routes
 app.use((req, res, next) => {
