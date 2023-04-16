@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 
 import Users from "../models/userModel.js";
 import { ResponseError } from "../class/ResponseError.js";
+import { SearchUser } from "../class/SearchUser.js";
 import { config } from "../config.js";
 
 const createAccessToken = (user) => {
@@ -51,22 +52,22 @@ const userCtrl = {
             });
         } catch (error) {
             console.log(error);
-            next(new ResponseError(500, "Something went wrong"));
+            return next(new ResponseError(500, "Something went wrong"));
         }
     },
     login: async (req, res, next) => {
         try {
             const { email, password } = req.body;
 
-            const user = await User.findOne({ email: email });
+            const user = await Users.findOne({ email: email });
 
             if (!user) {
-                next(new ResponseError(400, "User not found"));
+                return next(new ResponseError(400, "User not found"));
             };
 
             const checkPassword = await bcrypt.compare(password, user.password);
             if (!checkPassword) {
-                next(new ResponseError(400, "Password is incorrect"));
+                return next(new ResponseError(400, "Password is incorrect"));
             };
 
             // Create token
@@ -85,7 +86,7 @@ const userCtrl = {
             });
         } catch (error) {
             console.log(error);
-            next(new ResponseError(500, "Something went wrong"));
+            return next(new ResponseError(500, "Something went wrong"));
         }
     },
     logout: async (req, res, next) => {
@@ -99,7 +100,26 @@ const userCtrl = {
             });
         } catch (error) {
             console.log(error);
-            next(new ResponseError(500, "Something went wrong"));
+            return next(new ResponseError(500, "Something went wrong"));
+        }
+    },
+    getUsers: async (req, res, next) => {
+        try {
+            const { name } = req.body;
+
+            const filter = new SearchUser(Users.find(), name)
+                .filtering()
+                .paginating();
+
+            const result = await filter.query
+
+            return res.json({ 
+                result,
+                length: result.length,
+            });
+        } catch (error) {
+            console.log(error);
+            return next(new ResponseError(500, "Something went wrong"));
         }
     },
 };

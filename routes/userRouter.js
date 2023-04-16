@@ -10,4 +10,6 @@ router.post('/login', userCtrl.login);
 
 router.post('/logout', userCtrl.logout);
 
+router.post('/search', userCtrl.getUsers);
+
 export default router;
