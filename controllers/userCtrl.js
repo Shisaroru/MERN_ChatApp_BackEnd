@@ -122,6 +122,43 @@ const userCtrl = {
             return next(new ResponseError(500, "Something went wrong"));
         }
     },
+    addFriend: async (req, res, next) => {
+        try {
+            const { id, friendId } = req.body;
+            /* HACKED
+            Need to check if both user exist.
+            Need to check if the friend is already in the list or not.
+            */
+
+            const user = await Users.findByIdAndUpdate(id, {
+                "$push": { "friendList": friendId },
+            }, {
+                "new": true,
+            });
+
+            if (!user) {
+                return next(new ResponseError(400, "No user found"));
+            }
+
+            const friendUser = await Users.findByIdAndUpdate(friendId, {
+                "$push": { "friendList": id },
+            }, {
+                "new": true,
+            });
+
+            if (!friendUser) {
+                return next(new ResponseError(400, "No target user found"));
+            }
+
+            return res.json({
+                user,
+                friendUser,
+            });
+        } catch (error) {
+            console.log(error);
+            return next(new ResponseError(500, "Something went wrong"));
+        }
+    },
 };
 
 export default userCtrl;

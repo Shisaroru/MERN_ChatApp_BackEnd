@@ -16,7 +16,7 @@ app.use(express.json());
 // Enable CORS
 app.use(cors());
 
-// Enable cookies
+// Enable req.cookie
 app.use(cookieParser());
 
 // Connect to database
