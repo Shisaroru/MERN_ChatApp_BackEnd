@@ -4,6 +4,8 @@ import userCtrl from "../controllers/userCtrl.js";
 
 const router = Router();
 
+router.post('/refresh_token', userCtrl.refresh_token);
+
 router.post('/register', userCtrl.register);
 
 router.post('/login', userCtrl.login);

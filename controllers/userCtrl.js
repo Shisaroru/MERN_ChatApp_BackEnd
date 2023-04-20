@@ -9,6 +9,7 @@ import { SearchUser } from "../class/SearchUser.js";
 import { config } from "../config.js";
 
 const createAccessToken = (user) => {
+    console.log(user);
     return jwt.sign(user, config.accessSecret, { expiresIn: "4h" }); 
 };
 
@@ -17,6 +18,20 @@ const createRefreshToken = (user) => {
 };
 
 const userCtrl = {
+    // Verify refresh token and grant new access token and auto login
+    refresh_token: async (req, res, next) => {
+        const cookies = req.cookies;
+        jwt.verify(cookies.refresh_token, config.refreshSecret, 
+            (err, decoded) => {
+                if (err) {
+                    next(new ResponseError(400, "Please login or register"));
+                }
+                const accessToken = createAccessToken({ id:decoded.id });
+                const user = Users.findById(decoded.id);
+                return res.json({ user, accessToken });
+            }
+        );
+    },
     register: async (req, res, next) => {
         try {
             const { name, email, phoneNumber, password } = req.body;
@@ -36,7 +51,7 @@ const userCtrl = {
             const newUser = new Users({ name, email, phoneNumber, password: passwordHash });
 
             // Save to database
-            await newUser.save();
+            const result = await newUser.save();
 
             // Create token
             const accessToken = createAccessToken({ id: newUser._id });
@@ -50,7 +65,8 @@ const userCtrl = {
             });
 
             return res.json({
-                accessToken
+                user: result,
+                accessToken,
             });
         } catch (error) {
             console.log(error);
@@ -80,7 +96,7 @@ const userCtrl = {
             res.cookie('refresh_token', refreshToken, {
                 httpOnly: true,
                 maxAge: 1000 * 60 * 60 * 24 * 7,
-                path: "/user/refresh_token",
+                path: "/api/user/refresh_token",
             });
 
             return res.json({

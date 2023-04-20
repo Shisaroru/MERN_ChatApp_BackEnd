@@ -6,4 +6,6 @@ const router = Router();
 
 router.post('/', groupCtrl.getOneGroup);
 
+router.post('/all', groupCtrl.getAllGroups);
+
 export default router;

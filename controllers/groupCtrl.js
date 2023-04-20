@@ -23,6 +23,29 @@ const groupCtrl = {
             return next(new ResponseError(500, "Something went wrong"));
         }
     },
+    getAllGroups: async (req, res, next) => {
+        try {
+            const { groupList } = req.body;
+
+            if (groupList.length === 0) {
+                return res.json({});
+            }
+
+            // Check if the _id is in groupList array and sort by descending order with -1 as value
+            const result = await Groups.find({
+                "_id": {
+                    $in: groupList,
+                },
+            }).sort({
+                "updatedAt": -1,
+            });
+
+            return res.json({ result });
+        } catch (error) {
+            console.log(error);
+            return next(new ResponseError(500, "Something went wrong"));
+        }
+    },
 };
 
 export default groupCtrl;

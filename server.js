@@ -33,9 +33,9 @@ app.listen(config.port, () => {
 });
 
 // Routes
-app.use('/user', userRouter);
-app.use('/group', groupRouter);
-app.use('/message', messageRouter);
+app.use('/api/user', userRouter);
+app.use('/api/group', groupRouter);
+app.use('/api/message', messageRouter);
 
 // Handle 404 route, this should be at the end of every other routes
 app.use((req, res, next) => {
