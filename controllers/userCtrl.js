@@ -9,7 +9,6 @@ import { SearchUser } from "../class/SearchUser.js";
 import { config } from "../config.js";
 
 const createAccessToken = (user) => {
-    console.log(user);
     return jwt.sign(user, config.accessSecret, { expiresIn: "4h" }); 
 };
 
@@ -20,17 +19,22 @@ const createRefreshToken = (user) => {
 const userCtrl = {
     // Verify refresh token and grant new access token and auto login
     refresh_token: async (req, res, next) => {
-        const cookies = req.cookies;
-        jwt.verify(cookies.refresh_token, config.refreshSecret, 
-            (err, decoded) => {
-                if (err) {
-                    next(new ResponseError(400, "Please login or register"));
+        try {
+            const cookies = req.cookies;
+            jwt.verify(cookies.refresh_token, config.refreshSecret, 
+                async (err, decoded) => {
+                    if (err) {
+                        next(new ResponseError(400, "Please login or register"));
+                    }
+                    const accessToken = createAccessToken({ id:decoded.id });
+                    const user = await Users.findById(decoded.id);
+                    return res.json({ user, accessToken });
                 }
-                const accessToken = createAccessToken({ id:decoded.id });
-                const user = Users.findById(decoded.id);
-                return res.json({ user, accessToken });
-            }
-        );
+            );
+        } catch (err) {
+            console.log(err);
+            next(new ResponseError(400, "Please login or register"));
+        }
     },
     register: async (req, res, next) => {
         try {
@@ -142,18 +146,35 @@ const userCtrl = {
         }
     },
     addFriend: async (req, res, next) => {
+        // Start transaction
+            const UsersSession = await Users.startSession();
+            const GroupsSession = await Groups.startSession();
+
+            UsersSession.startTransaction();
+            GroupsSession.startTransaction();
+
         try {
             const { id, friendId } = req.body;
-            /* HACKED
-            Need to check if both user exist.
-            Need to check if the friend is already in the list or not.
+            
+            // Check if both user exist
+            const checkUser = await Users.findById(id);
+            if (!checkUser) {
+                return next(new ResponseError(400, "User not found"));
+            }
 
-            I think this need to use transaction
-            */
+            const checkFriend = await Users.findById(friendId);
+            if (!checkFriend) {
+                return next(new ResponseError(400, "Friend not found"));
+            }
 
+            // Check if they're already friend or not
+            if (checkUser.friendList.includes(checkFriend._id)) {
+                return next(new ResponseError(400, "You're already add this user as a friend"));
+            }
+            
             // Create group that contains both user and friend
             const group = new Groups({
-                name: "",
+                name: `${checkUser.name},${checkFriend.name}`,
                 members: [id, friendId],
                 admin: [id, friendId],
                 latestMessage: "",
@@ -186,12 +207,24 @@ const userCtrl = {
                 return next(new ResponseError(400, "No target user found"));
             }
 
+            // Commit transaction
+            await UsersSession.commitTransaction();
+            await GroupsSession.commitTransaction();
+            await UsersSession.endSession();
+            await GroupsSession.endSession();
+
             return res.json({
                 user,
                 friendUser,
             });
         } catch (error) {
             console.log(error);
+
+            await UsersSession.abortTransaction();
+            await GroupsSession.abortTransaction();
+            await UsersSession.endSession();
+            await GroupsSession.endSession();
+
             return next(new ResponseError(500, "Something went wrong"));
         }
     },
