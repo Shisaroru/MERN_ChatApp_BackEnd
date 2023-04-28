@@ -15,7 +15,7 @@ const messageCtrl = {
             const messagesList = await Messages.find({
               receiver: groupId,  
             })
-            .limit(5);
+            //.limit(5);
 
             return res.json({ messagesList });
         } catch (error) {
@@ -25,7 +25,7 @@ const messageCtrl = {
     },
     sendMessage: async (req, res, next) => {
         try {
-            const { sender , groupId, message } = req.body;
+            const { sender, senderName , groupId, message } = req.body;
 
             if (groupId.length < 24 || sender.length < 24) {
                 return next(new ResponseError(400, "Invalid id"));
@@ -38,6 +38,7 @@ const messageCtrl = {
             const newMessage = new Messages({
                 message,
                 sender,
+                senderName,
                 receiver: groupId,
             });
 

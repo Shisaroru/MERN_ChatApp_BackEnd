@@ -9,6 +9,10 @@ const messageSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    senderName: {
+        type: String,
+        required: true,
+    },
     receiver: {
         type: String,
         required: true,

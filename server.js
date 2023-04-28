@@ -2,15 +2,24 @@ import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
+import { createServer } from "http";
+import { Server } from "socket.io";
 
 import { config } from "./config.js";
 import { ResponseError } from "./class/ResponseError.js";
+import socketHandler from "./middleware/socket.io.js";
 
 import userRouter from "./routes/userRouter.js";
 import groupRouter from "./routes/groupRouter.js";
 import messageRouter from "./routes/messageRouter.js";
 
 const app = express();
+const server = createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "http://localhost:5173"
+    }
+});
 
 // Accept json request
 app.use(express.json());
@@ -28,9 +37,15 @@ mongoose
     .catch(err => { console.log(err); });
 
 // Start server
-app.listen(config.port, () => {
+// app.listen(config.port, () => {
+//     console.log("Server is listening on port " + config.port);
+// });
+server.listen(config.port, () => {
     console.log("Server is listening on port " + config.port);
 });
+
+// Socket.io handlers
+io.on('connection', socketHandler);
 
 // Routes
 app.use('/api/user', userRouter);
