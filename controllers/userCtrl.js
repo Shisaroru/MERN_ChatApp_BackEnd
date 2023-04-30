@@ -24,7 +24,7 @@ const userCtrl = {
             jwt.verify(cookies.refresh_token, config.refreshSecret, 
                 async (err, decoded) => {
                     if (err) {
-                        next(new ResponseError(400, "Please login or register"));
+                        return next(new ResponseError(400, "Please login or register"));
                     }
                     const accessToken = createAccessToken({ id:decoded.id });
                     const user = await Users.findById(decoded.id);
@@ -115,7 +115,7 @@ const userCtrl = {
     logout: async (req, res, next) => {
         try {
             res.clearCookie('refresh_token', {
-                path: '/user/refresh_token',
+                path: '/api/user/refresh_token',
             });
 
             return res.json({

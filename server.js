@@ -7,7 +7,9 @@ import { Server } from "socket.io";
 
 import { config } from "./config.js";
 import { ResponseError } from "./class/ResponseError.js";
+
 import socketHandler from "./middleware/socket.io.js";
+import authSocket from "./middleware/auth.socket.js";
 
 import userRouter from "./routes/userRouter.js";
 import groupRouter from "./routes/groupRouter.js";
@@ -44,8 +46,14 @@ server.listen(config.port, () => {
     console.log("Server is listening on port " + config.port);
 });
 
+// Socket.io middleware
+io.use(authSocket);
+
 // Socket.io handlers
-io.on('connection', socketHandler);
+const onConnection = (socket) => {
+    socketHandler(io, socket);
+}
+io.on('connection', onConnection);
 
 // Routes
 app.use('/api/user', userRouter);

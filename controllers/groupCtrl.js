@@ -27,7 +27,7 @@ const groupCtrl = {
         try {
             const { groupList } = req.body;
 
-            if (groupList.length === 0) {
+            if (!groupList || groupList.length === 0) {
                 return res.json({});
             }
 
