@@ -10,6 +10,7 @@ function authSocket(socket, next) {
         
         next();
     } catch (error) {
+        console.log(error)
         next(new Error('Invalid token'));
     }
 }
