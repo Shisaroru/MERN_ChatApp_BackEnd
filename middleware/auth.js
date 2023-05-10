@@ -5,7 +5,7 @@ import { config } from "../config.js";
 
 export function auth(req, res, next) {
   try {
-    const token = req.headers("Authorization");
+    const token = req.header("Authorization");
     if (!token) {
       return next(new ResponseError(400, "Invalid token"));
     }

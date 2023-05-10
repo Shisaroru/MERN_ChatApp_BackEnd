@@ -16,6 +16,6 @@ router.post("/logout", userCtrl.logout);
 
 router.post("/search", auth, userCtrl.getUsers);
 
-router.patch("/add_friend", auth, userCtrl.addFriend);
+router.patch("/unfriend", auth, userCtrl.unfriend);
 
 export default router;

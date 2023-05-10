@@ -1,40 +1,45 @@
 import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema(
+  {
     name: {
-        type: String,
-        required: true,
-        trim: true,
+      type: String,
+      required: true,
+      trim: true,
     },
     email: {
-        type: String,
-        required: true,
-        trim: true,
+      type: String,
+      required: true,
+      trim: true,
     },
     phoneNumber: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     password: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     friendList: {
-        type: Array,
-        default: [],
+      type: Array,
+      default: [],
     },
     groupList: {
-        type: Array,
-        default: [],
+      type: Array,
+      default: [],
     },
     notifications: {
-        type: Array,
-        default: [],
+      type: Array,
+      default: [],
     },
-},
-{
+    requests: {
+      type: Array,
+      default: [],
+    },
+  },
+  {
     timestamps: true,
-},
+  }
 );
 
 export default mongoose.model("Users", userSchema);
