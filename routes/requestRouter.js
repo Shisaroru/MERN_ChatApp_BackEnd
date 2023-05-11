@@ -12,4 +12,6 @@ router.post("/reply", auth, requestCtrl.replyRequest);
 
 router.delete("/cancel", auth, requestCtrl.cancelRequest);
 
+router.post("/getOneRequest", auth, requestCtrl.getOneRequest);
+
 export default router;

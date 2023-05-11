@@ -16,6 +16,8 @@ router.post("/logout", userCtrl.logout);
 
 router.post("/search", auth, userCtrl.getUsers);
 
+router.post("/getOneUser", auth, userCtrl.getOneUser);
+
 router.patch("/unfriend", auth, userCtrl.unfriend);
 
 export default router;

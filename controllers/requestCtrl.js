@@ -33,7 +33,7 @@ const requestCtrl = {
         requestee,
         {
           $push: {
-            requests: result._id.toString(),
+            sentRequests: result._id.toString(),
           },
         },
         {
@@ -114,63 +114,128 @@ const requestCtrl = {
       }
 
       // Modify request array in both user and friend
-      const newUserRequestArray = checkUser.requests.filter(
+      const newUserSentRequestArray = checkUser.sentRequests.filter(
         (value) => value !== id
       );
       const newFriendRequestArray = checkFriend.requests.filter(
         (value) => value !== id
       );
 
-      // Create group that contains both user and friend
-      const group = new Groups({
-        name: `${checkUser.name},${checkFriend.name}`,
-        members: [checkUser._id.toString(), checkFriend._id.toString()],
-        admin: [checkUser._id.toString(), checkFriend._id.toString()],
-        latestMessage: "",
+      // Check if they were friends before, if so mean that there're a group for them created
+      const foundCreatedGroup = await Groups.findOne({
+        $and: [
+          {
+            members: {
+              $size: 2,
+            },
+          },
+          {
+            members: {
+              $elemMatch: { $eq: checkUser._id.toString() },
+            },
+          },
+          {
+            members: {
+              $elemMatch: { $eq: checkFriend._id.toString() },
+            },
+          },
+        ],
       });
-      const createdGroup = await group.save();
 
-      const user = await Users.findByIdAndUpdate(
-        checkUser._id,
-        {
-          $push: {
-            friendList: checkFriend._id.toString(),
-            groupList: createdGroup._id.toString(),
+      let friendUser;
+      let createdGroup;
+
+      if (foundCreatedGroup) {
+        createdGroup = foundCreatedGroup;
+        const user = await Users.findByIdAndUpdate(
+          checkUser._id,
+          {
+            $push: {
+              friendList: checkFriend._id.toString(),
+            },
+            $set: {
+              sentRequests: newUserSentRequestArray,
+            },
           },
-          $set: {
-            requests: newUserRequestArray,
-          },
-        },
-        {
-          new: true,
+          {
+            new: true,
+          }
+        );
+
+        if (!user) {
+          return next(new ResponseError(400, "No user found"));
         }
-      );
 
-      if (!user) {
-        return next(new ResponseError(400, "No user found"));
+        friendUser = await Users.findByIdAndUpdate(
+          checkFriend._id,
+          {
+            $push: {
+              friendList: checkUser._id.toString(),
+            },
+            $set: {
+              requests: newFriendRequestArray,
+            },
+          },
+          {
+            new: true,
+          }
+        );
+
+        if (!friendUser) {
+          return next(new ResponseError(400, "No target user found"));
+        }
+      } else {
+        // Create group that contains both user and friend
+        const group = new Groups({
+          name: `${checkUser.name},${checkFriend.name}`,
+          members: [checkUser._id.toString(), checkFriend._id.toString()],
+          admin: [checkUser._id.toString(), checkFriend._id.toString()],
+          latestMessage: "",
+        });
+        createdGroup = await group.save();
+
+        const user = await Users.findByIdAndUpdate(
+          checkUser._id,
+          {
+            $push: {
+              friendList: checkFriend._id.toString(),
+              groupList: createdGroup._id.toString(),
+            },
+            $set: {
+              sentRequests: newUserSentRequestArray,
+            },
+          },
+          {
+            new: true,
+          }
+        );
+
+        if (!user) {
+          return next(new ResponseError(400, "No user found"));
+        }
+
+        friendUser = await Users.findByIdAndUpdate(
+          checkFriend._id,
+          {
+            $push: {
+              friendList: checkUser._id.toString(),
+              groupList: createdGroup._id.toString(),
+            },
+            $set: {
+              requests: newFriendRequestArray,
+            },
+          },
+          {
+            new: true,
+          }
+        );
+
+        if (!friendUser) {
+          return next(new ResponseError(400, "No target user found"));
+        }
       }
-
-      const friendUser = await Users.findByIdAndUpdate(
-        checkFriend._id,
-        {
-          $push: {
-            friendList: checkUser._id.toString(),
-            groupList: createdGroup._id.toString(),
-          },
-          $set: {
-            requests: newFriendRequestArray,
-          },
-        },
-        {
-          new: true,
-        }
-      );
 
       await Requests.findByIdAndDelete(id);
-
-      if (!friendUser) {
-        return next(new ResponseError(400, "No target user found"));
-      }
 
       // Commit transaction
       await UsersSession.commitTransaction();
@@ -178,8 +243,8 @@ const requestCtrl = {
       await RequestsSession.commitTransaction();
 
       return res.json({
-        user,
         friendUser,
+        createdGroup,
       });
     } catch (error) {
       console.log(error);
@@ -208,22 +273,40 @@ const requestCtrl = {
       const checkUser = await Users.findById(result.requestee);
       const checkFriend = await Users.findById(result.targetUser);
 
-      const newUserRequestArray = checkUser.requests.filter(
+      const newUserSentRequestArray = checkUser.sentRequests.filter(
         (value) => value !== id
       );
       const newFriendRequestArray = checkFriend.requests.filter(
         (value) => value !== id
       );
 
-      console.log(newUserRequestArray, newFriendRequestArray);
-
       await Users.findByIdAndUpdate(result.requestee, {
-        requests: newUserRequestArray,
+        sentRequests: newUserSentRequestArray,
       });
 
       await Users.findByIdAndUpdate(result.targetUser, {
         requests: newFriendRequestArray,
       });
+
+      return res.json({
+        result,
+      });
+    } catch (error) {
+      console.log(error);
+      return next(new ResponseError(500, "Something went wrong"));
+    }
+  },
+  getOneRequest: async (req, res, next) => {
+    try {
+      const { id } = req.body;
+      if (!id) {
+        return next(new ResponseError(400, "Invalid id"));
+      }
+
+      const result = await Requests.findById(id);
+      if (!result) {
+        return next(new ResponseError(400, "Can't find request"));
+      }
 
       return res.json({
         result,

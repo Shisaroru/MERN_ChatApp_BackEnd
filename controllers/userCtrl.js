@@ -30,6 +30,10 @@ const userCtrl = {
           }
           const accessToken = createAccessToken({ id: decoded.id });
           const user = await Users.findById(decoded.id);
+          if (!user) {
+            return next(new ResponseError(400, "Cannot find user"));
+          }
+
           return res.json({ user, accessToken });
         }
       );
@@ -174,16 +178,48 @@ const userCtrl = {
         (friend) => id !== friend
       );
 
-      const newUser = await Users.findByIdAndUpdate(id, {
-        friendList: newUserFriendList,
-      });
-      const newFriend = await Users.findByIdAndUpdate(friendId, {
-        friendList: newFriendFriendList,
-      });
+      const newUser = await Users.findByIdAndUpdate(
+        id,
+        {
+          friendList: newUserFriendList,
+        },
+        {
+          new: true,
+        }
+      );
+      const newFriend = await Users.findByIdAndUpdate(
+        friendId,
+        {
+          friendList: newFriendFriendList,
+        },
+        {
+          new: true,
+        }
+      );
 
       return res.json({
         newUser,
         newFriend,
+      });
+    } catch (error) {
+      console.log(error);
+      return next(new ResponseError(500, "Something went wrong"));
+    }
+  },
+  getOneUser: async (req, res, next) => {
+    try {
+      const { id } = req.body;
+      if (!id) {
+        return next(new ResponseError(400, "Invalid id"));
+      }
+
+      const result = await Users.findById(id);
+      if (!result) {
+        return next(new ResponseError(400, "Couldn't find user"));
+      }
+
+      return res.json({
+        result,
       });
     } catch (error) {
       console.log(error);
