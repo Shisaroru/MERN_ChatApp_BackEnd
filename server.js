@@ -55,8 +55,9 @@ server.listen(config.port, () => {
 io.use(authSocket);
 
 // Socket.io handlers
+const onlineObject = {};
 const onConnection = (socket) => {
-  socketHandler(io, socket);
+  socketHandler(io, socket, onlineObject);
 };
 io.on("connection", onConnection);
 

@@ -143,11 +143,12 @@ const requestCtrl = {
       });
 
       let friendUser;
+      let user;
       let createdGroup;
 
       if (foundCreatedGroup) {
         createdGroup = foundCreatedGroup;
-        const user = await Users.findByIdAndUpdate(
+        user = await Users.findByIdAndUpdate(
           checkUser._id,
           {
             $push: {
@@ -194,7 +195,7 @@ const requestCtrl = {
         });
         createdGroup = await group.save();
 
-        const user = await Users.findByIdAndUpdate(
+        user = await Users.findByIdAndUpdate(
           checkUser._id,
           {
             $push: {
@@ -243,6 +244,7 @@ const requestCtrl = {
       await RequestsSession.commitTransaction();
 
       return res.json({
+        user,
         friendUser,
         createdGroup,
       });

@@ -20,4 +20,6 @@ router.post("/getOneUser", auth, userCtrl.getOneUser);
 
 router.patch("/unfriend", auth, userCtrl.unfriend);
 
+router.patch("/clearNotifications", auth, userCtrl.clearNotifications);
+
 export default router;

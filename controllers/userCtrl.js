@@ -226,6 +226,25 @@ const userCtrl = {
       return next(new ResponseError(500, "Something went wrong"));
     }
   },
+  clearNotifications: async (req, res, next) => {
+    try {
+      const { id, notify } = req.body;
+      const user = await Users.findById(id);
+
+      const notifyObject = user.notifications;
+      delete notifyObject[notify];
+      await Users.findByIdAndUpdate(id, {
+        notifications: notifyObject,
+      });
+
+      return res.json({
+        message: "Ok",
+      });
+    } catch (error) {
+      console.log(error);
+      return next(new ResponseError(500, "Something went wrong"));
+    }
+  },
 };
 
 export default userCtrl;
